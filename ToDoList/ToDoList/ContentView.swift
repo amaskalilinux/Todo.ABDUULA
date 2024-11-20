@@ -1,69 +1,52 @@
-//
-//  ContentView.swift
-//  ToDoList
-//
-//  Created by abdulla alblooshi on 19/11/2024.
-//  I have try this way i hope its work will :)
+//  Created by ABDLLA ALBOOSHI.
+//  Udacity CreateApps
 
 import SwiftUI
-import Combine
 
 struct ContentView: View {
-    @ObservedObject var taskStore = TaskStore()
-    @State var newnewTask: String = ""
-    var searchBar : some View {
-        HStack{
-            TextField("Insert New Task",text:
-                        self.$newnewTask)
-            Button(action:  self.addnewnewTask,
-                   label:{Text("Add New")})
-            
-        }
-    }
-    
-    func addnewnewTask(){
-        taskStore.tasks
-            .append(Task(id:String(taskStore
-                .tasks.count +
-                                   1),newTask:newnewTask))
-        self.newnewTask = ""
-    }
-    
-    
+    @StateObject private var viewModel = TodoViewModel()
+    @State private var newTodoTitle: String = ""
+
     var body: some View {
         NavigationView {
-            VStack{
-                searchBar.padding()
-                List{
-                    
-                    ForEach(self.taskStore
-                        .tasks){
-                            
-                            task in
-                            Text(task.newTask)
-                        }.onMove(perform: self.move)
-                        .onDelete(perform: self.delete)
-                }.navigationTitle("To Do List")
-            }.navigationBarItems(trailing:
-                                    EditButton())
-        }
-    }
-    
-    func move (from source : IndexSet, to
-               destination : Int){
-        taskStore.tasks.move(fromOffsets: source,
-                             toOffset: destination)
-    }
-    func delete (at offsets : IndexSet){
-        taskStore.tasks.remove(atOffsets:
-                                offsets)
-    }
-    
-    
-    
-    struct ContentView_Previews: PreviewProvider {
-        static var previews: some View {
-            ContentView()
+            VStack {
+                TextField("Enter new todo", text: $newTodoTitle)
+                    .padding()
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+                Button(action: {
+                    viewModel.add(title: newTodoTitle)
+                    newTodoTitle = ""
+                }) {
+                    Text("Add Todo")
+                }
+                .padding()
+
+                List {
+                    ForEach(viewModel.todos) { todo in
+                        HStack {
+                            Text(todo.title)
+                            Spacer()
+                            if todo.isCompleted {
+                                Text("✅")
+                            } else {
+                                Text("❌")
+                            }
+                        }
+                        .onTapGesture {
+                            if let index = viewModel.todos.firstIndex(where: { $0.id == todo.id }) {
+                                viewModel.toggleCompletion(at: index)
+                            }
+                        }
+                    }
+                    .onDelete(perform: { indexSet in
+                        indexSet.forEach { index in
+                            viewModel.delete(at: index)
+                        }
+                    })
+                }
+            }
+            .navigationTitle("To-Do List")
         }
     }
 }
